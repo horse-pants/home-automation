@@ -1,0 +1,95 @@
+﻿esphome:
+  name: bathroom
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+  password: ""
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+#  manual_ip:
+#    static_ip: 
+#    gateway: 
+#    subnet: 255.255.255.0
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: ""
+    password: ""
+
+captive_portal:
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO4
+      mode: INPUT_PULLUP
+      inverted: True
+    id: button
+    filters:
+      - delayed_on: 100ms
+      - delayed_off: 100ms
+    on_press:
+      then:
+        if:
+          condition:
+            switch.is_on: relay_1
+          then:
+            - switch.turn_off: relay_1
+            - servo.write:
+                id: my_servo
+                level: 0.0%
+          else:
+            #- cover.open: laundry_chute
+            - switch.turn_on: relay_1
+            - servo.write:
+                id: my_servo
+                level: 100.0%
+            - delay: 5000ms
+            - if:
+                condition:
+                  switch.is_on: relay_1
+                then:
+                  - switch.turn_off: relay_1
+                  - servo.write:
+                      id: my_servo
+                      level: 0.0%
+
+
+switch:
+  - platform: gpio
+    name: Motion LED
+    icon: "mdi:lightbulb"
+    pin: GPIO2
+    id: relay_1
+
+servo:
+  - id: my_servo
+    output: pwm_output
+    transition_length: 1s
+    restore: true
+
+# Example output platform
+# On ESP32, use ledc output
+output:
+  - platform: ledc
+    id: pwm_output
+    pin: GPIO13
+    frequency: 50 Hz
+    
+
+    
+    
+    
