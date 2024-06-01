@@ -1,4 +1,5 @@
-﻿metadata:
+﻿#https://home.google.com/automations
+metadata:
   name: Package Delivered
   description: When a package is delivered, send a notification.
 automations:
