@@ -1,5 +1,5 @@
 ﻿esphome:
-  name: bathroom
+  name: bathroom-laundry-chute
 
 esp32:
   board: esp32dev
@@ -19,16 +19,11 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
 
-#  manual_ip:
-#    static_ip: 
-#    gateway: 
-#    subnet: 255.255.255.0
-
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
-    ssid: ""
-    password: ""
-
+    ssid: $name "-ap"
+    password: !secret wifi_password
+    
 captive_portal:
 
 binary_sensor:

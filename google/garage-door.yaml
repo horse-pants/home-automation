@@ -1,0 +1,16 @@
+﻿metadata:
+  name: Garage door opened
+  description: When the garage door is opened
+automations:
+  - starters:
+      - type: device.state.OpenClose
+        state: openPercent
+        isNot: 0
+        for: 1 hour
+        device: Garage door - Garage
+    actions:
+      - type: assistant.command.Broadcast
+        devices:
+          - Studio speaker - Studio
+        message: Garage door has been open for an hour
+             

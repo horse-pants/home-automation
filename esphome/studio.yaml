@@ -1,0 +1,86 @@
+﻿esphome:
+  name: $devicename
+
+esp32:
+  board: nodemcu-32s
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+  level: DEBUG
+  logs:
+    component: ERROR
+    
+# Enable Home Assistant API
+api:
+
+ota:
+  password: !secret wifi_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  ap:
+    ssid: $devicename "-ap"
+    password: !secret wifi_password
+      
+web_server:
+  
+substitutions:
+  devicename: studio
+  device_name: studio
+
+  # This will vary based on your board
+  uart_tx_pin: GPIO21
+  
+  # This will vary based on your board
+  uart_rx_pin: GPIO22
+  
+  # This will vary based on your board
+  gpio_pin: GPIO16
+  
+  # (Optional) Path to the leapmmw_sensor.h file relative to your esphome configuration directory.
+  header_file: leapmmw_sensor.h
+
+packages:
+  remote_package:
+    url: https://github.com/hjmcnew/esphome-hs2xx3a-custom-component
+    ref: release
+    file: packages/leapmmw_sensor.yml
+
+i2c:
+  sda: 18
+  scl: 19
+  scan: true
+  id: i2c_bus
+      
+sensor:
+  - platform: bme280_i2c
+    temperature:
+      name: "BME280 Temperature"
+      oversampling: 16x
+    pressure:
+      name: "BME280 Pressure"
+    humidity:
+      name: "BME280 Humidity"
+    address: 0x76
+    update_interval: 10s
+
+  - platform: bh1750
+    name: "BH1750 Illuminance"
+    address: 0x23
+    update_interval: 10s
+    
+binary_sensor:
+  - platform: gpio
+    name: pir
+    id: pir
+    pin: GPIO26
+    filters:
+      - delayed_off: 1000ms
+      
+      
+      
+      

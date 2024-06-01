@@ -1,0 +1,20 @@
+﻿metadata:
+  name: Package Delivered
+  description: When a package is delivered, send a notification.
+automations:
+  - starters:
+      - type: device.event.PackageDelivered
+        device: Front door doorbell - Front door
+    actions:
+      - type: assistant.command.Broadcast
+        devices:
+          - Studio speaker - Studio
+          - Kitchen(James Speakers) - Kitchen
+          - Sewing Room speaker - Sewing Room
+          - Living Room speaker - Living Room
+        message: Package at the door
+      - type: home.command.Notification
+        title: Package Delivered
+        body: A package is delivered
+        members:
+          - {{email}}

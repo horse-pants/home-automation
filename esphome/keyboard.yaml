@@ -1,0 +1,211 @@
+﻿esphome:
+  name: keyboard
+  friendly_name: Keyboard
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+  level: DEBUG
+  logs:
+    component: ERROR
+
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "KrIbun7e40DNOMXPBTT0zeCP4F3pNNq2Ya5ydt+sVd0="
+
+ota:
+  password: !secret wifi_password
+
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Keyboard Fallback Hotspot"
+    password: !secret wifi_password
+
+captive_portal:
+    
+external_components:
+  - source: github://pr#3917
+    components: [hid, keyboard, usb_device, web_server]
+    refresh: always
+
+web_server:
+  local: true
+
+button:
+  - platform: template
+    name: "KVM 2"
+    id: kvm2
+    on_press:
+      # then:
+        # - keyboard.down:
+        #     id: kbd
+        #     keys: 
+        #       - ShiftLeft
+        #       - 5
+        # - delay: 100ms
+        # - keyboard.set:
+        #     id: kbd
+      then:
+        - keyboard.down:
+            id: kbd
+            keys: ControlLeft
+        - delay: 200ms
+        - keyboard.up:
+            id: kbd
+            keys: ControlLeft
+        - delay: 200ms
+        - keyboard.down:
+            id: kbd
+            keys: ControlLeft
+        - delay: 200ms
+        - keyboard.up:
+            id: kbd
+            keys: ControlLeft
+        - delay: 200ms
+        - keyboard.down:
+            id: kbd
+            keys: Digit2
+        - delay: 200ms
+        - keyboard.up:
+            id: kbd
+            keys: Digit2
+        - keyboard.down:
+            id: kbd
+            keys: Numpad2
+        - delay: 200ms
+        - keyboard.up:
+            id: kbd
+            keys: Numpad2
+
+keyboard:
+  - platform: hid
+    name: Blue kbd
+    hid_id: usb_hid
+    id: kbd
+
+hid:
+  - platform: usb_device
+    id: usb_hid
+    type:
+      boot_protocol: keyboard
+      # composite:
+      #  - keyboard
+
+binary_sensor:
+  - platform: usb_device
+    mounted:
+      name: USB is mounted
+    ready:
+      name: USB is ready
+    suspended:
+      name: USB is suspended
+  - platform: keyboard
+    keyboard_id: kbd
+    capslock:
+      name: capslock
+    numlock:
+      name: numlock
+    scrollock:
+      name: scrollock
+      
+  - platform: gpio
+    name: Button
+    pin:
+      number: GPIO41
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    filters:
+      - delayed_off: 10ms
+    on_press:
+      then:
+        - button.press: kvm2
+        - logger.log: Button Pressed
+        - lambda: |-
+            id(buttonOn) = !id(buttonOn);            
+        - logger.log: 
+            format: "Button = %d"
+            args: [ 'id(buttonOn)' ] 
+
+globals:
+  - id: buttonOn
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+    
+switch:
+  - platform: usb_device
+    detach:
+      name: Detach USB device
+    wake_up:
+      name: Wake up host
+
+#G4=IR
+remote_transmitter:
+  pin: GPIO4
+  carrier_duty_percent: 50%
+
+font:
+  - file: "gfonts://Roboto"
+    id: font_default
+    size: 24
+
+color:
+  - id: my_red
+    red: 100%
+    green: 3%
+    blue: 5%
+
+time:
+  platform: homeassistant
+  id: ha_time
+
+spi:
+  clk_pin: 17
+  mosi_pin: 21
+
+display:
+  - platform: st7789v
+    id: display_tft
+    model: Custom
+    height: 128
+    width: 128
+    rotation: 180
+    offset_height: 2
+    offset_width: 1
+    backlight_pin: 16
+    cs_pin: 15
+    dc_pin: 33
+    reset_pin: 34
+    eightbitcolor: true
+    update_interval: 100ms
+    lambda: |-
+      auto red = Color(255, 0, 0);
+      auto green = Color(0, 255, 0);
+      //it.image(0, 0, id(esphome_logo));
+      it.strftime(64, 104, id(font_default), TextAlign::TOP_CENTER, "%l:%M %p", id(ha_time).now());
+
+      if (id(buttonOn)) {
+        it.print(64, 0, id(font_default),TextAlign::TOP_CENTER, "True");
+        it.filled_circle(it.get_width() / 2, it.get_height() / 2, 20, green);
+      } else {
+        it.print(64, 0, id(font_default),TextAlign::TOP_CENTER, "False");
+        it.filled_circle(it.get_width() / 2, it.get_height() / 2, 20, red);
+      }
+
+image:
+  - file: https://esphome.io/_images/logo.png
+    id: esphome_logo
+    resize: 128x128
